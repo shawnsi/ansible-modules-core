@@ -106,6 +106,12 @@ options:
       - A list of security group id's with which to associate the ClassicLink VPC instances.
     required: false
     version_added: "2.0"
+  append_hash:
+    description:
+      - Appends an md5 hash of launch configuration properties to the name.
+    required: false
+    default: false
+    version_added: "2.1"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -133,6 +139,8 @@ EXAMPLES = '''
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
+
+import hashlib
 
 try:
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
@@ -182,6 +190,7 @@ def create_launch_config(connection, module):
     ebs_optimized = module.params.get('ebs_optimized')
     classic_link_vpc_id = module.params.get('classic_link_vpc_id')
     classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
+    append_hash = module.params.get('append_hash')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -211,6 +220,15 @@ def create_launch_config(connection, module):
         classic_link_vpc_security_groups=classic_link_vpc_security_groups,
         classic_link_vpc_id=classic_link_vpc_id,
     )
+
+    if append_hash:
+        # MD5 of launch configuration properties
+        h = hashlib.md5()
+        h.update(str(frozenset(lc.__dict__)))
+
+        # Update name variables with md5 hash
+        name = '-'.join((name, h.hexdigest()))
+        lc.name = name
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -285,7 +303,8 @@ def main():
             instance_monitoring=dict(default=False, type='bool'),
             assign_public_ip=dict(type='bool'),
             classic_link_vpc_security_groups=dict(type='list'),
-            classic_link_vpc_id=dict(type='str')
+            classic_link_vpc_id=dict(type='str'),
+            append_hash=dict(default=False, type='bool')
         )
     )
 
