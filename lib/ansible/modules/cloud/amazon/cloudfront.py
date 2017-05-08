@@ -1077,11 +1077,14 @@ class CloudFrontValidationManager:
                                                             'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
                 self.validate_is_list(allowed_methods.get('items'),
                                       'cache_behavior.allowed_methods.items')
+                allowed_methods['quantity'] = len(allowed_methods['items'])
                 if 'cached_methods' in allowed_methods:
-                    self.validate_is_list(allowed_methods.get('cached_methods'),
+                    cached_methods = allowed_methods.get('cached_methods')
+                    self.validate_is_list(cached_methods,
                                           'cache_behavior.allowed_methods.cached_methods')
-                    self.validate_attribute_with_allowed_values(allowed_methods.get('cached_methods'),
+                    self.validate_attribute_with_allowed_values(cached_methods,
                                                                 'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
+                    cached_methods['quantity'] = len(cached_methods)
             lambda_function_associations = cache_behavior.get('lambda_function_associations')
             if lambda_function_associations is not None:
                 self.validate_is_list(lambda_function_associations, 'lambda_function_associations')
